@@ -17,6 +17,22 @@ This reads from the same internal endpoint that the **Settings > Usage** page in
 
 ---
 
+## Dashboard card
+
+If you want a richer Lovelace UI for these sensors, use the companion
+[Claude Usage Gauge Card](https://github.com/j6s33m/claude-usage-gauge-card).
+
+This package provides the Home Assistant sensors:
+
+- `sensor.claude_session_usage`
+- `sensor.claude_weekly_usage`
+- `sensor.claude_weekly_resets`
+
+The gauge card visualizes those entities as a themed session gauge with a weekly
+usage bar and pacing indicator.
+
+---
+
 ## Requirements
 
 - Home Assistant with packages enabled
