@@ -81,13 +81,13 @@ The cookie is what authenticates the request as you. Treat it like a password.
 
 1. Still in developer tools on the **Settings > Usage** page, find that same `usage` request.
 2. Right-click it and choose **Copy > Copy as cURL**.
-3. In the copied text, find the `Cookie: ...'` portion. You are looking for the secion that includes: *sessionKey=[HEXIDECIMAL_COOKIE]** and *sessionKeyLC=[NUMBER]*. That whole string is your cookie value.
+3. In the copied text, find the `Cookie: ...'` portion. You are looking for the secion that includes: *`sessionKey=`[HEXIDECIMAL_COOKIE]* and `sessionKeyLC=`[NUMBER]*. That whole string is your cookie value.
 4. In `secrets.yaml`, add:
 
    ```yaml
    claude_session_cookie: "sessionKey=[PASTE_THE_ENTIRE_COOKIE_STRING_HERE]; sessionKeyLC=[PASTE_THE_13_DIGIT_NUMBER_HERE]"
    ```
-   Keep it on one line, wrapped in double quotes.
+   Keep it on one line, with semi-colong between, wrapped in double quotes.
 
 ---
 
