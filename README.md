@@ -102,7 +102,7 @@ The session cookie does not last forever. When it expires, the sensors go stale 
 
 ---
 
-## Optional: dashboard banner
+## Optional: stale-cookie dashboard banner
 
 Add this card to the top of your dashboard. It stays hidden until the cookie is stale.
 
