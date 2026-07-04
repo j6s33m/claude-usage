@@ -17,7 +17,7 @@ This reads from the same internal endpoint that the **Settings > Usage** page in
 
 ---
 
-## Home Assistant Dashboard card
+## Home Assistant dashboard card
 
 If you want a richer Lovelace UI for these sensors, use the companion
 [Claude Usage Gauge Card](https://github.com/j6s33m/claude-usage-gauge-card).
