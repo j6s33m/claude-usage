@@ -56,8 +56,6 @@ This reads from the same internal endpoint that the **Settings > Usage** page in
 5. The long value between `organizations/` and `/usage` is your ORG_ID. It looks like `12478870-41cc-4707-9730-c47bcd852942`.
 6. Paste it in place of `YOUR_ORG_ID` in `claude_usage.yaml`.
 
-Your ORG_ID is tied to your account. Do not commit the real value to a public repo. Keep the `YOUR_ORG_ID` placeholder in any version you push.
-
 ---
 
 ## How to get your session cookie
