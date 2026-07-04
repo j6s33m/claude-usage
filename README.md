@@ -68,9 +68,10 @@ usage bar and pacing indicator.
 1. Log into [claude.ai](https://claude.ai) in your browser.
 2. Go to **Settings > Usage**.
 3. Open your browser's developer tools (F12), and click the **Network** tab.
-4. Reload the page. In the request list, find the call to `.../organizations/<something>/usage`.
-5. The long value between `organizations/` and `/usage` is your ORG_ID. It looks like `12478870-41cc-4707-9730-c47bcd852942`.
-6. Paste it in place of `YOUR_ORG_ID` in `claude_usage.yaml`.
+5. Reload the page. In the **Network** tab, filter to *Fetch/XHR* and click the request named **usage**.
+6. Find the *Request URL* with output: `https://claude.ai/api/organizations/<something>/usage`.
+7. The long value between `organizations/` and `/usage` is your ORG_ID. It looks like `48372619-5a7c-1f3d-9b88-c2f4de7a1b9e`.
+8. Paste it in place of `YOUR_ORG_ID` in `claude_usage.yaml`.
 
 ---
 
@@ -80,19 +81,13 @@ The cookie is what authenticates the request as you. Treat it like a password.
 
 1. Still in developer tools on the **Settings > Usage** page, find that same `usage` request.
 2. Right-click it and choose **Copy > Copy as cURL**.
-3. In the copied text, find the `-H 'Cookie: ...'` (or `-b '...'`) portion. That whole string is your cookie value.
+3. In the copied text, find the `Cookie: ...'` portion. You are looking for the secion that includes: *sessionKey=[HEXIDECIMAL_COOKIE]** and *sessionKeyLC=[NUMBER]*. That whole string is your cookie value.
 4. In `secrets.yaml`, add:
 
    ```yaml
-   claude_session_cookie: "PASTE_THE_ENTIRE_COOKIE_STRING_HERE"
+   claude_session_cookie: "sessionKey=[PASTE_THE_ENTIRE_COOKIE_STRING_HERE]; sessionKeyLC=[PASTE_THE_13_DIGIT_NUMBER_HERE]"
    ```
-
    Keep it on one line, wrapped in double quotes.
-
-Notes:
-- The cookie includes several parts (session key, `cf_clearance`, and others). Paste the whole thing, not just one piece.
-- If you get a 401 or an HTML challenge page instead of JSON, the cURL copy also shows other headers (`anthropic-anonymous-id`, `anthropic-client-platform`, and similar). Add those under `headers:` in the YAML verbatim.
-- The `user-agent` in the YAML should ideally match your real browser. If polling fails, replace it with the exact `user-agent` from your cURL copy.
 
 ---
 
