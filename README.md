@@ -127,7 +127,7 @@ card:
 
 ## Polling frequency
 
-Default is 300 seconds (5 minutes). The usage counters are coarse rolling windows, so faster polling gains you little. Going much below 2 minutes only raises your odds of a Cloudflare challenge and gives no extra signal. 5 to 15 minutes is the sensible range.
+Default is 300 seconds (5 minutes). The usage counters are coarse rolling windows, so faster polling gains you little. 5 to 15 minutes is the sensible range.
 
 ---
 
