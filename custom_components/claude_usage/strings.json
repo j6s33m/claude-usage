@@ -1,0 +1,76 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Claude Usage",
+        "description": "Paste the Cookie header from a claude.ai usage request. Open claude.ai in your browser, go to Settings > Usage, press F12, open the Network tab, reload the page, click the request named `usage`, then copy the whole Cookie header value (it starts with `sessionKey=`). Your organization is detected automatically.",
+        "data": {
+          "cookie": "Cookie header",
+          "scan_interval": "Polling interval"
+        },
+        "data_description": {
+          "cookie": "Treat this like a password. It is stored in Home Assistant's config entry storage.",
+          "scan_interval": "How often to poll claude.ai. 300 to 900 seconds is sensible; the usage counters are coarse."
+        }
+      },
+      "pick_org": {
+        "title": "Choose an organization",
+        "description": "This cookie can see more than one organization. Pick the one whose usage you want to track.",
+        "data": {
+          "org_id": "Organization"
+        }
+      },
+      "manual_org": {
+        "title": "Enter your organization ID",
+        "description": "Automatic detection did not work. Find the ID in the usage request URL: `https://claude.ai/api/organizations/<this part>/usage`.",
+        "data": {
+          "org_id": "Organization ID"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Refresh your Claude cookie",
+        "description": "The cookie for {org} is no longer accepted. Grab a fresh one from claude.ai and paste it below.",
+        "data": {
+          "cookie": "Cookie header"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "That cookie was rejected. Make sure you copied the whole Cookie header, including `sessionKey=`.",
+      "cannot_connect": "Could not reach claude.ai. Check Home Assistant's internet access and try again.",
+      "challenge": "claude.ai returned a bot challenge page instead of data. Try copying the Cookie header again, including the `cf_clearance` value if present.",
+      "unknown_response": "claude.ai answered, but not with usage data this integration recognises. The endpoint may have changed."
+    },
+    "abort": {
+      "already_configured": "This Claude organization is already set up.",
+      "reauth_successful": "Cookie updated. Usage tracking has resumed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Claude Usage options",
+        "data": {
+          "scan_interval": "Polling interval"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll claude.ai, in seconds. Polling faster than every 5 minutes gains you very little and increases the chance of being rate limited."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "session_usage": { "name": "Session Usage" },
+      "weekly_usage": { "name": "Weekly Usage" },
+      "opus_weekly_usage": { "name": "Opus Weekly Usage" },
+      "session_resets": { "name": "Session Resets" },
+      "weekly_resets": { "name": "Weekly Resets" },
+      "session_reset_time": { "name": "Session Reset Time" },
+      "weekly_reset_time": { "name": "Weekly Reset Time" }
+    },
+    "binary_sensor": {
+      "cookie_stale": { "name": "Cookie Stale" }
+    }
+  }
+}
