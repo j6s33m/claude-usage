@@ -1,0 +1,66 @@
+blueprint:
+  name: Claude usage alert
+  description: >-
+    Notify when a Claude usage window crosses a threshold. Replaces the
+    hardcoded automation that shipped with the old YAML package, so you pick
+    your own entity, threshold, and notify service instead of editing YAML.
+  domain: automation
+  author: j6s33m
+  source_url: https://github.com/j6s33m/claude-usage/blob/main/blueprints/claude_usage_high_alert.yaml
+  input:
+    usage_entity:
+      name: Usage sensor
+      description: Which usage window to watch.
+      default: sensor.claude_weekly_usage
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: claude_usage
+    threshold:
+      name: Threshold
+      description: Fire when usage goes above this percentage.
+      default: 85
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+    reset_attribute:
+      name: Countdown attribute
+      description: >-
+        Attribute holding the time until reset. Use session_resets_in for the
+        5 hour window, or week_resets_in for the weekly window.
+      default: week_resets_in
+      selector:
+        text:
+    notify_action:
+      name: Notification action
+      description: >-
+        What to run when the threshold is crossed. Two variables are available
+        to you inside it: {{ title }} and {{ message }}.
+      selector:
+        action:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input usage_entity
+    above: !input threshold
+    for:
+      minutes: 1
+
+variables:
+  usage_entity: !input usage_entity
+  reset_attribute: !input reset_attribute
+  threshold: !input threshold
+  title: "Claude usage high"
+  message: >-
+    {{ state_attr(usage_entity, 'friendly_name') | default('Claude usage', true) }}
+    is at {{ states(usage_entity) }}%, over your {{ threshold }}% threshold.
+    Resets in {{ state_attr(usage_entity, reset_attribute) | default('unknown', true) }}.
+
+action: !input notify_action
