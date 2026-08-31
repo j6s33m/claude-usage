@@ -37,6 +37,18 @@ async def async_get_config_entry_diagnostics(
                 if coordinator.update_interval
                 else None
             ),
+            "consecutive_failures": coordinator.consecutive_failures,
+            "consecutive_challenges": coordinator.consecutive_challenges,
+            "last_successful_update": (
+                coordinator.last_successful_update.isoformat()
+                if coordinator.last_successful_update
+                else None
+            ),
+            "stale_for_seconds": (
+                round(coordinator.stale_for.total_seconds())
+                if coordinator.stale_for
+                else None
+            ),
             "last_exception": str(coordinator.last_exception or ""),
         },
         "parsed_limits": {

@@ -34,7 +34,7 @@ Use it for your own account. It is provided as-is.
 | `sensor.claude_session_reset_time` | Native timestamp, for template-free countdowns |
 | `sensor.claude_weekly_reset_time` | Native timestamp |
 | `sensor.claude_opus_weekly_usage` | Created only if your plan reports a separate Opus weekly limit |
-| `binary_sensor.claude_cookie_stale` | On when the last poll failed |
+| `binary_sensor.claude_cookie_stale` | On when the cookie is rejected, or after 30 minutes with no data |
 
 The two percentage sensors carry `severity`, `*_resets_at`, `*_resets`, and a live `*_resets_in` countdown as attributes.
 
@@ -118,7 +118,16 @@ If you were running `claude_usage.yaml` in `/config/packages/`:
 
 Your entity IDs, dashboards, and any automations referring to them keep working. The old file is kept in [`legacy/`](legacy/) for reference.
 
-**One behavior change worth knowing:** `binary_sensor.claude_cookie_stale` used to trip after 30 minutes of no data. It now trips on the first failed poll, and carries a `reason` attribute (`cookie_rejected`, `update_failed`, or `ok`).
+**`binary_sensor.claude_cookie_stale` behaves as it did in the YAML package**, with better reasons attached. It trips when the cookie is actually rejected, or after 30 minutes with no successful poll, and it stays off through the transient failures in between. It carries a `reason` attribute:
+
+| `reason` | Meaning |
+|---|---|
+| `ok` | Last poll succeeded |
+| `recovering` | A poll failed, but one succeeded within the last 30 minutes. Not actionable |
+| `no_data` | Nothing has succeeded for 30 minutes. The dashboard numbers are stale |
+| `cookie_rejected` | claude.ai rejected the cookie, or challenged repeatedly. Go get a new one |
+
+Supporting attributes: `consecutive_failures`, `last_successful_update`, `stale_for_minutes`, and `last_error`.
 
 ---
 
@@ -135,6 +144,8 @@ Default is 300 seconds. The counters are coarse rolling windows, so faster polli
 **"claude.ai returned a bot challenge page"** — Cloudflare is challenging Home Assistant. Recopy the full Cookie header including `cf_clearance`. If it keeps happening, your Home Assistant's IP reputation may be the issue.
 
 **Sensors unavailable after working fine** — check **Settings → Repairs** first, it is usually the cookie.
+
+**Cookie Stale flapping between OK and Problem** — you are on a version older than 1.1.2, where the sensor tripped on any single failed poll. Update the integration. If it still flaps on 1.1.2, look at `last_error`: repeated rate limiting means your polling interval is too short.
 
 **No Opus sensor after upgrading your plan** — that entity is created at setup only if your account reports an Opus limit. Reload the integration (three dots → **Reload**) and it will appear.
 
