@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -19,7 +19,11 @@ from .api import (
     ClaudeUsageClient,
     ClaudeUsageError,
 )
-from .const import DOMAIN, PAYLOAD_KEY_MAP
+from .const import (
+    CHALLENGE_FAILURE_THRESHOLD,
+    DOMAIN,
+    PAYLOAD_KEY_MAP,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,25 +78,82 @@ class ClaudeUsageCoordinator(DataUpdateCoordinator[ClaudeUsageData]):
         )
         self.client = client
         self.org_id = org_id
-        # Tracks whether the most recent failure was an auth failure, which is
-        # what the cookie stale binary sensor reports.
+        # Set only when claude.ai has actually rejected the cookie, which is
+        # the one condition that will not clear itself on the next poll.
         self.auth_failed = False
+        # Failure bookkeeping. The cookie stale binary sensor reads these
+        # rather than `last_update_success`, so that a one-off timeout or rate
+        # limit does not present itself to the user as a dead cookie.
+        self.consecutive_failures = 0
+        self.consecutive_challenges = 0
+        self.last_successful_update: datetime | None = None
+
+    @property
+    def stale_for(self) -> timedelta | None:
+        """Return how long it has been since a poll last succeeded.
+
+        None means no poll has ever succeeded for this entry. Setup gates on a
+        first successful refresh, so that state is only reachable if something
+        is genuinely wrong.
+        """
+        if self.last_successful_update is None:
+            return None
+        return dt_util.utcnow() - self.last_successful_update
+
+    @callback
+    def _record_success(self) -> None:
+        """Reset all failure bookkeeping after a good poll."""
+        self.auth_failed = False
+        self.consecutive_failures = 0
+        self.consecutive_challenges = 0
+        self.last_successful_update = dt_util.utcnow()
+
+    @callback
+    def _record_failure(self, *, challenge: bool = False) -> None:
+        """Count a failed poll.
+
+        The challenge counter tracks a *run* of challenges, so any other
+        outcome, success or a different error, breaks the run.
+        """
+        self.consecutive_failures += 1
+        if challenge:
+            self.consecutive_challenges += 1
+        else:
+            self.consecutive_challenges = 0
 
     async def _async_update_data(self) -> ClaudeUsageData:
         """Poll once."""
         try:
             raw = await self.client.async_get_usage(self.org_id)
-        except (ClaudeUsageAuthError, ClaudeUsageChallengeError) as err:
-            # Both mean "a human has to go get a new cookie". Raising
-            # ConfigEntryAuthFailed makes Home Assistant open a repair issue and
-            # start the reauth flow, which replaces the old 30 minute stale
-            # sensor plus notify automation.
+        except ClaudeUsageAuthError as err:
+            # claude.ai explicitly rejected the cookie. That does not start
+            # working again on its own, so escalate on the first occurrence:
+            # ConfigEntryAuthFailed opens a repair issue and starts reauth.
+            self._record_failure()
             self.auth_failed = True
             raise ConfigEntryAuthFailed(str(err)) from err
+        except ClaudeUsageChallengeError as err:
+            # A bot challenge often clears by itself. Treat the first one as an
+            # ordinary retry and only call it an auth problem once it repeats,
+            # so a single Cloudflare interstitial cannot send the user off to
+            # fetch a cookie that was never expired.
+            self._record_failure(challenge=True)
+            if self.consecutive_challenges >= CHALLENGE_FAILURE_THRESHOLD:
+                self.auth_failed = True
+                raise ConfigEntryAuthFailed(str(err)) from err
+            _LOGGER.debug(
+                "Bot challenge on poll %s of %s before treating the cookie as "
+                "expired: %s",
+                self.consecutive_challenges,
+                CHALLENGE_FAILURE_THRESHOLD,
+                err,
+            )
+            raise UpdateFailed(str(err)) from err
         except ClaudeUsageError as err:
+            self._record_failure()
             raise UpdateFailed(str(err)) from err
 
-        self.auth_failed = False
+        self._record_success()
         return normalize_payload(raw)
 
 

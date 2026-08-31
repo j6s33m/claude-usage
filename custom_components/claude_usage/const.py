@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "claude_usage"
@@ -33,6 +34,20 @@ DEFAULT_HEADERS: Final[dict[str, str]] = {
         "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
     ),
 }
+
+# Cookie health.
+#
+# A single failed poll is not evidence of a dead cookie. Timeouts, HTTP 429,
+# a 5xx from Cloudflare and a dropped connection all resolve themselves on the
+# next cycle, and alerting on them produces false alarms. The YAML package
+# absorbed these with `delay_on: 30 minutes`; this is the same guarantee,
+# expressed as elapsed time so it holds at any polling interval.
+STALE_AFTER: Final = timedelta(minutes=30)
+
+# A bot challenge is ambiguous: it can mean the cookie is dead, but a single
+# interstitial is routinely transient. Require this many consecutive challenges
+# before opening a repair issue and asking the user for a new cookie.
+CHALLENGE_FAILURE_THRESHOLD: Final = 2
 
 # Internal limit keys used throughout the integration.
 LIMIT_SESSION: Final = "session"
